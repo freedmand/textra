@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7688E76B293A52A800489ACD /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7688E76A293A52A800489ACD /* Progress.swift */; };
+		7688E76D293A533100489ACD /* ProgressElements.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7688E76C293A533100489ACD /* ProgressElements.swift */; };
+		7688E76F293A534A00489ACD /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7688E76E293A534A00489ACD /* Utilities.swift */; };
 		768F2A532935B2240049F6BA /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 768F2A522935B2240049F6BA /* main.swift */; };
 /* End PBXBuildFile section */
 
@@ -23,6 +26,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		7688E76A293A52A800489ACD /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
+		7688E76C293A533100489ACD /* ProgressElements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressElements.swift; sourceTree = "<group>"; };
+		7688E76E293A534A00489ACD /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		768F2A4F2935B2240049F6BA /* textra */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = textra; sourceTree = BUILT_PRODUCTS_DIR; };
 		768F2A522935B2240049F6BA /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -38,6 +44,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7688E770293A535400489ACD /* Progress */ = {
+			isa = PBXGroup;
+			children = (
+				7688E76A293A52A800489ACD /* Progress.swift */,
+				7688E76C293A533100489ACD /* ProgressElements.swift */,
+				7688E76E293A534A00489ACD /* Utilities.swift */,
+			);
+			path = Progress;
+			sourceTree = "<group>";
+		};
 		768F2A462935B2240049F6BA = {
 			isa = PBXGroup;
 			children = (
@@ -57,6 +73,7 @@
 		768F2A512935B2240049F6BA /* textra */ = {
 			isa = PBXGroup;
 			children = (
+				7688E770293A535400489ACD /* Progress */,
 				768F2A522935B2240049F6BA /* main.swift */,
 			);
 			path = textra;
@@ -90,7 +107,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1400;
-				LastUpgradeCheck = 1400;
+				LastUpgradeCheck = 1410;
 				TargetAttributes = {
 					768F2A4E2935B2240049F6BA = {
 						CreatedOnToolsVersion = 14.0;
@@ -120,6 +137,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7688E76B293A52A800489ACD /* Progress.swift in Sources */,
+				7688E76D293A533100489ACD /* ProgressElements.swift in Sources */,
+				7688E76F293A534A00489ACD /* Utilities.swift in Sources */,
 				768F2A532935B2240049F6BA /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -160,6 +180,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -220,6 +241,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -243,7 +265,9 @@
 		768F2A572935B2240049F6BA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 7QRGMH7934;
 				ENABLE_HARDENED_RUNTIME = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -254,7 +278,9 @@
 		768F2A582935B2240049F6BA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 7QRGMH7934;
 				ENABLE_HARDENED_RUNTIME = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
