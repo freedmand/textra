@@ -289,7 +289,31 @@ func writeText(filePath: String, pageText: String) {
 
 // MARK: - Conversion handlers
 
+/**
+ Validates that the specified files are all valid for reading. If not, logs an error message.
+ 
+ - Parameter filePaths: A list of file paths to verify
+ - Returns: Whether all the file paths are valid for reading or not
+ */
+func validateFiles(filePaths: Array<String>) -> Bool {
+  for filePath in filePaths {
+      // Go through each file
+    let fileManager = FileManager.default
+      var isDirectory: ObjCBool = false
+    if !fileManager.fileExists(atPath: filePath, isDirectory: &isDirectory) || !fileManager.isReadableFile(atPath: filePath) {
+      logError(message: "File at path '\(filePath)' does not exist or is not readable")
+      return false
+    }
+      if isDirectory.boolValue {
+          logError(message: "Path '\(filePath)' is a directory, not an input file")
+          return false
+      }
+  }
+  return true
+}
+
 func validateConvertRequest(convertRequest: ConvertRequest) -> Bool {
+    // Validate specific configurations
     switch (convertRequest.input, convertRequest.output) {
     case (.images(let filePaths), .path):
         if filePaths.count > 1 {
@@ -304,8 +328,23 @@ func validateConvertRequest(convertRequest: ConvertRequest) -> Bool {
             return false
         }
     default:
-        return true
+        break
     }
+    
+    // Validate input paths
+    switch convertRequest.input {
+    case .pdf(let filePath):
+        if !validateFiles(filePaths: [filePath]) {
+            printUsage()
+            return false
+        }
+    case .images(let filePaths):
+        if !validateFiles(filePaths: filePaths) {
+            printUsage()
+            return false
+        }
+    }
+    
     // Fallback
     return true
 }
@@ -357,6 +396,18 @@ func handleConvertResponse(convertFile: ConvertFile, output: ConvertOutput, conv
 
 // MARK: - Terminal utilities
 
+/// Whether the program is running in a terminal or not
+let isTerminal = isatty(STDOUT_FILENO) == 1 && isatty(STDERR_FILENO) == 1
+
+/// The terminal red format code
+let RED_START = isTerminal ? "\u{001B}[0;31m" : ""
+/// The terminal green format code
+let GREEN_START = isTerminal ? "\u{001B}[32m" : ""
+/// The terminal bold format code
+let BOLD_START = isTerminal ? "\u{001B}[1m" : ""
+/// The terminal code to reset formatting
+let RESET = isTerminal ? "\u{001B}[0m" : ""
+
 /**
  Get the width of the current terminal
  
@@ -379,7 +430,7 @@ func getTerminalWidth(defaultWidth: Int = 80) -> Int {
  - Parameter message: The error message
  */
 func logError(message: String) {
-    print("\u{001B}[0;31mERROR: \(message)\u{001B}[0m\n")
+    print("\(RED_START)ERROR: \(message)\(RESET)\n")
 }
 
 /**
@@ -410,24 +461,24 @@ func printConvertRequest(convertRequest: ConvertRequest) {
         output = "path \(filePattern)"
     }
     
-    print("\u{001B}[32mConverting the specified \(input) and outputting text at the \(output)\u{001B}[0m")
+    print("\(GREEN_START)Converting the specified \(input) and outputting text at the \(output)\(RESET)")
 }
 
 /**
  Prints the usage instructions for the application
  */
 func printUsage() {
-    print("\u{001B}[32mUsage:\u{001B}[0m \u{001B}[1mtextra\u{001B}[0m FILE1 [FILE2...]\n")
-    print("\u{001B}[1mtextra\u{001B}[0m is a command-line application to convert images and PDF files of images to text using Apple's Vision text recognition API.\n")
-    print("\u{001B}[32mArguments:\u{001B}[0m")
-    print(" \u{001B}[1mFILE1 [FILE2...]\u{001B}[0m One or more files to be converted.\n")
+    print("\(GREEN_START)Usage:\(RESET) \(BOLD_START)textra\(RESET) FILE1 [FILE2...]\n")
+    print("\(BOLD_START)textra\(RESET) is a command-line application to convert images and PDF files of images to text using Apple's Vision text recognition API.\n")
+    print("\(GREEN_START)Arguments:\(RESET)")
+    print(" \(BOLD_START)FILE1 [FILE2...]\(RESET) One or more files to be converted.\n")
     print("If multiple files are provided, the last file must be the output directory or a pattern containing an output path.\n")
-    print("\u{001B}[32mExamples:\u{001B}[0m")
-    print("- \u{001B}[1mtextra\u{001B}[0m image.png")
-    print("- \u{001B}[1mtextra\u{001B}[0m image1.png image2.png output-dir/")
-    print("- \u{001B}[1mtextra\u{001B}[0m document.pdf")
-    print("- \u{001B}[1mtextra\u{001B}[0m document.pdf output-dir/")
-    print("- \u{001B}[1mtextra\u{001B}[0m document.pdf page-{}.txt")
+    print("\(GREEN_START)Examples:\(RESET)")
+    print("- \(BOLD_START)textra\(RESET) image.png")
+    print("- \(BOLD_START)textra\(RESET) image1.png image2.png output-dir/")
+    print("- \(BOLD_START)textra\(RESET) document.pdf")
+    print("- \(BOLD_START)textra\(RESET) document.pdf output-dir/")
+    print("- \(BOLD_START)textra\(RESET) document.pdf page-{}.txt")
 }
 
 func main(args: [String]) async {
