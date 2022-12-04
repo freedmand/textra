@@ -62,7 +62,7 @@ fi
 
 # Check if the Mac OS version is greater than or equal to 13
 if [[ $(sw_vers -productVersion | cut -d . -f 1) -lt 13 ]]; then
-    error 'Mac OS 13 or greater is required to run textra. Please upgrade your Mac and try again.'
+    error 'Mac OS 13 or greater is required to run textra since it depends on Apple''s updated Vision APIs. Please upgrade your Mac and try again.'
 fi
 
 download_uri="https://github.com/freedmand/textra/releases/download/0.0.1/textra-0.0.1.zip"
