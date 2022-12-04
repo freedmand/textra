@@ -9,7 +9,7 @@ Textra requires Mac OS version 13 or greater to access the latest Vision APIs.
 The easiest way to install `textra` is to open a terminal window and run the following command:
 
 ```sh
-curl https://github.com/freedmand/textra/raw/main/install.sh | bash
+curl -L https://github.com/freedmand/textra/raw/main/install.sh | bash
 ```
 
 Alternatively, download the latest [release](https://github.com/freedmand/textra/releases), unzip it, and place the `textra` executable somewhere on your `$PATH` variable.
