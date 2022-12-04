@@ -2,6 +2,8 @@
 
 A command-line application to convert images and PDF files of images to text using Apple's Vision text recognition API.
 
+![A terminal window showing the text: | % textra ~/The-Mueller-Report.pdf | Converting the specified PDF file and outputting text at the directory "~/The-Mueller-Report" | 16 of 448 [-      ] ETA: 00:05:21 (at 1.34 it/s)](https://user-images.githubusercontent.com/306095/205505079-e0371055-29dc-4913-97e4-a57782bb4a5c.png)
+
 ## Installation
 
 Textra requires Mac OS version 13 or greater to access the latest Vision APIs.
