@@ -893,6 +893,15 @@ func convert(_ cliInput: CLIInput) async {
             pageCountIndex += 1
             progressBar.setValue(index: progressOffset, visibleIndex: pageOffset)
         }
+        
+        // Close all write handles that can be closed
+        for writeHandle in writeHandles {
+            do {
+                try writeHandle.close()
+            } catch {
+                // No need to do anything
+            }
+        }
     }
 }
 
@@ -1142,7 +1151,7 @@ func printUsage(advanced: Bool = false) {
     printWrap("  \(BOLD_START)-t\(RESET), \(BOLD_START)--outputPageText\(RESET)   Output each file/page to a text file")
     printWrap("  \(BOLD_START)-p\(RESET), \(BOLD_START)--outputPositions\(RESET)  Output positional text for each file/page to json (experimental; results may differ from page text)\n")
     printWrap("\(GREEN_START)\(BOLD_START)Examples:\(RESET)")
-    printWrap("  \(BOLD_START)textra\(RESET) image.png")
+    printWrap("  \(BOLD_START)textra\(RESET) audio.mp3")
     printWrap("  \(BOLD_START)textra\(RESET) page1.png page2.png \(BOLD_START)-o\(RESET) combined.txt")
     printWrap("  \(BOLD_START)textra\(RESET) doc.pdf \(BOLD_START)-o\(RESET) doc.txt \(BOLD_START)-t\(RESET) doc/page-{}.txt\(advanced ? "" : "\n")")
     if advanced {

@@ -91,7 +91,7 @@ def assert_files(files):
         ), f"Expected files to match ({files} != {file_contents.keys()})"
         # Ensure the files have content
         for f in files:
-            assert has_content(file_contents[f]), "Expected file to have content"
+            assert has_content(file_contents[f]), f"Expected file {f} to have content"
 
     return assert_files
 
@@ -334,5 +334,22 @@ run(
         assert_has_error("file type is not supported"),
     ],
 )
+
+# TODO: investigate why these fail (but only in Python?)
+# run(
+#     [
+#         "textra docp1.png -o output.txt -x",
+#         "textra docp1.png -o output.txt --outputStdout",
+#         "textra docp1.png -s -o output.txt -x",
+#         "textra docp1.png -s -o output.txt --outputStdout",
+#         "textra docp1.png --silent -o output.txt -x",
+#         "textra docp1.png --silent -o output.txt --outputStdout",
+#     ],
+#     [
+#         assert_files(["output.txt"]),
+#         assert_stdout,
+#         assert_no_error,
+#     ],
+# )
 
 print("ALL TESTS PASSED")
