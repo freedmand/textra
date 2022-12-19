@@ -79,6 +79,10 @@ the page number/base file name to the specified path.
 
 MIT
 
+## Contributions
+
+This repo is in early stages but contributions are welcome. Please submit an issue or feel free to fork and contribute a pull request.
+
 ## Credits
 
 Many thanks to [Brandon Roberts](https://journa.host/@bxroberts) and [Marcos Huerta](https://vmst.io/@marcoshuerta) for their help and encouragement with positional text extraction.
