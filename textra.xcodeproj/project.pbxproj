@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7618F13B29458E6B0067B7D2 /* version.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7618F13A29458E6B0067B7D2 /* version.swift */; };
 		7688E76B293A52A800489ACD /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7688E76A293A52A800489ACD /* Progress.swift */; };
 		7688E76D293A533100489ACD /* ProgressElements.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7688E76C293A533100489ACD /* ProgressElements.swift */; };
 		7688E76F293A534A00489ACD /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7688E76E293A534A00489ACD /* Utilities.swift */; };
@@ -26,6 +27,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		7618F13A29458E6B0067B7D2 /* version.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = version.swift; sourceTree = "<group>"; };
 		7688E76A293A52A800489ACD /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
 		7688E76C293A533100489ACD /* ProgressElements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressElements.swift; sourceTree = "<group>"; };
 		7688E76E293A534A00489ACD /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
@@ -75,6 +77,7 @@
 			children = (
 				7688E770293A535400489ACD /* Progress */,
 				768F2A522935B2240049F6BA /* main.swift */,
+				7618F13A29458E6B0067B7D2 /* version.swift */,
 			);
 			path = textra;
 			sourceTree = "<group>";
@@ -139,6 +142,7 @@
 			files = (
 				7688E76B293A52A800489ACD /* Progress.swift in Sources */,
 				7688E76D293A533100489ACD /* ProgressElements.swift in Sources */,
+				7618F13B29458E6B0067B7D2 /* version.swift in Sources */,
 				7688E76F293A534A00489ACD /* Utilities.swift in Sources */,
 				768F2A532935B2240049F6BA /* main.swift in Sources */,
 			);

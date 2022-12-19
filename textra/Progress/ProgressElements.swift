@@ -60,7 +60,7 @@ public struct ProgressIndex: ProgressElementType {
     public init() {}
     
     public func value(_ progressBar: ProgressBar) -> String {
-        return "\(progressBar.index) of \(progressBar.count)"
+        return "\(progressBar.visibleIndex) of \(progressBar.visibleCount)"
     }
 }
 
@@ -99,7 +99,7 @@ public struct ProgressTimeEstimates: ProgressElementType {
         
         let estimatedTimeRemainingString = formatDuration(estimatedTimeRemaining)
         
-        return "ETA: \(estimatedTimeRemainingString) (at \(itemsPerSecond.format(2))) it/s)"
+        return "ETA: \(estimatedTimeRemainingString) (at \(itemsPerSecond.format(2)) it/s)"
     }
     
     fileprivate func formatDuration(_ duration: Double) -> String {

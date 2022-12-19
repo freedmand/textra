@@ -3,6 +3,7 @@ import os
 import tempfile
 import shutil
 from distutils.dir_util import copy_tree
+import re
 
 # The current directory of the script
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,13 +17,14 @@ def run_command(command, cwd):
         shell=True,
         cwd=cwd,
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+        stderr=subprocess.PIPE,
     )
 
     # Get the stdout and stderr
     stdout = result.stdout.decode("utf-8")
+    stderr = result.stderr.decode("utf-8")
 
-    return stdout
+    return stdout, stderr
 
 
 def recursive_list_dir(dir):
@@ -48,7 +50,7 @@ def run_test(textra_command):
     files = recursive_list_dir(temp_dir)
 
     # Run command
-    output = run_command(textra_command, temp_dir)
+    stdout, stderr = run_command(textra_command, temp_dir)
 
     # Get new files in the test data dir
     new_files = [f for f in recursive_list_dir(temp_dir) if f not in files]
@@ -64,74 +66,273 @@ def run_test(textra_command):
 
     # Return stdout, stderr, and a mapping of all the new files
     # and their contents
-    return output, new_file_contents
+    return stdout, stderr, new_file_contents
 
 
-# textra -> should result in no files produced
-output, files = run_test("textra")
-assert not files, "Expected no output files"
+def run(cmd, assertions):
+    # Check if cmd is a list
+    if isinstance(cmd, list):
+        for c in cmd:
+            run(c, assertions)
+        return
+    stdout, stderr, new_file_contents = run_test(cmd)
+    for assertion in assertions:
+        assertion(stdout, stderr, new_file_contents)
 
-# textra docp1.png -> should result in docp1.txt
-output, files = run_test("textra docp1.png")
-assert len(files) == 1, "Should have extracted 1 file"
-assert has_content(files["docp1.txt"])
 
-# textra docp1.png doc2.png -> should be an error (no output directory)
-output, files = run_test("textra docp1.png docp2.png")
-assert "must be a directory" in output
-assert not files, "Expected no output files"
+def assert_no_file_contents(stdout, stderr, file_contents):
+    assert not file_contents, "Expected no output files"
 
-# textra docp1.png doc2.png doc.txt -> should be an error (no output directory)
-output, files = run_test("textra docp1.png docp2.png doc.txt")
-assert "must be a directory" in output
-assert not files, "Expected no output files"
 
-# textra docp1.png doc2.png doc-{}.txt -> should be an error (no output directory)
-output, files = run_test("textra docp1.png docp2.png doc-{}.txt")
-assert "must be a directory" in output
-assert not files, "Expected no output files"
+def assert_files(files):
+    def assert_files(stdout, stderr, file_contents):
+        assert set(files) == set(
+            file_contents.keys()
+        ), f"Expected files to match ({files} != {file_contents.keys()})"
+        # Ensure the files have content
+        for f in files:
+            assert has_content(file_contents[f]), "Expected file to have content"
 
-# textra docp1.png docp2.png docp3.png output -> should result in output/docp1.txt, output/docp2.txt, output/docp3.txt
-output, files = run_test("textra docp1.png docp2.png docp3.png output")
-assert len(files) == 3, "Should have extracted 3 files"
-assert has_content(files["output/docp1.txt"])
-assert has_content(files["output/docp2.txt"])
-assert has_content(files["output/docp3.txt"])
+    return assert_files
 
-# textra doc_3.pdf -> should result in doc_3/1.txt, doc_3/2.txt, doc_3/3.txt
-output, files = run_test("textra doc_3.pdf")
-assert len(files) == 3, "Should have extracted 3 files"
-assert has_content(files["doc_3/1.txt"])
-assert has_content(files["doc_3/2.txt"])
-assert has_content(files["doc_3/3.txt"])
 
-# textra doc_3.pdf output -> should result in output/1.txt, output/2.txt, output/3.txt
-output, files = run_test("textra doc_3.pdf output")
-assert len(files) == 3, "Should have extracted 3 files"
-assert has_content(files["output/1.txt"])
-assert has_content(files["output/2.txt"])
-assert has_content(files["output/3.txt"])
+def assert_no_stdout(stdout, stderr, file_contents):
+    assert not stdout, "Expected no stdout"
 
-# textra doc_3.pdf output-{}.txt -> should result in output-1.txt, output-2.txt, output-3.txt
-output, files = run_test("textra doc_3.pdf output-{}.txt")
-assert len(files) == 3, "Should have extracted 3 files"
-assert has_content(files["output-1.txt"])
-assert has_content(files["output-2.txt"])
-assert has_content(files["output-3.txt"])
 
-# textra doc_3.pdf output.txt -> should result in an error (must contain a pattern)
-output, files = run_test("textra doc_3.pdf output.txt")
-assert "must contain a pattern" in output
-assert not files, "Expected no output files"
+def assert_stdout(stdout, stderr, file_contents):
+    assert stdout, "Expected stdout"
 
-# textra zzz -> should result in an error (does not exist)
-output, files = run_test("textra zzz")
-assert "does not exist" in output
-assert not files, "Expected no output files"
 
-# textra test_empty_dir -> should result in an error (is a directory)
-output, files = run_test("textra test_empty_dir")
-assert "is a directory" in output
-assert not files, "Expected no output files"
+def assert_no_stderr(stdout, stderr, file_contents):
+    assert not stderr, "Expected no stderr"
+
+
+def assert_stderr_matches(regex):
+    def assert_stderr_matches(stdout, stderr, file_contents):
+        assert re.search(regex, stderr), "Expected stderr to match regex"
+
+    return assert_stderr_matches
+
+
+def assert_stdout_matches(regex):
+    def assert_stdout_matches(stdout, stderr, file_contents):
+        assert re.search(regex, stdout), "Expected stdout to match regex"
+
+    return assert_stdout_matches
+
+
+def does_not(assertion):
+    def does_not(stdout, stderr, file_contents):
+        try:
+            assertion(stdout, stderr, file_contents)
+        except AssertionError:
+            return
+        raise AssertionError("Expected assertion to fail")
+
+    return does_not
+
+
+def assert_no_error(stdout, stderr, file_contents):
+    return does_not(assert_stderr_matches("ERROR"))
+
+
+def assert_has_error(error=""):
+    def assert_has_error(stdout, stderr, file_contents):
+        assert re.search(
+            rf"ERROR:.*{error}", stderr, re.IGNORECASE
+        ), "Expected stderr to contain error"
+
+    return assert_has_error
+
+
+# TEST CASES
+run(
+    "textra",
+    [
+        assert_no_file_contents,
+        assert_no_stdout,
+        assert_no_error,
+        assert_stderr_matches("textra -h"),
+    ],
+)
+
+run(
+    ["textra -h", "textra --help"],
+    [
+        assert_no_file_contents,
+        assert_no_stdout,
+        assert_no_error,
+        does_not(assert_stderr_matches("textra -h")),
+    ],
+)
+
+run(
+    ["textra -v", "textra --version"],
+    [
+        assert_no_file_contents,
+        assert_no_stdout,
+        assert_no_error,
+        assert_stderr_matches(r"\d+\.\d+\.\d+"),
+    ],
+)
+
+run(
+    [
+        "textra docp1.png",
+        "textra docp1.png docp2.png",
+        "textra doc_3.pdf",
+        "textra docp1.png docp3.png doc_3.pdf audio.m4a",
+    ],
+    [
+        assert_no_file_contents,
+        assert_stdout,
+        assert_no_error,
+    ],
+)
+
+run(
+    "textra docp1.png -o docp1.txt",
+    [
+        assert_files(["docp1.txt"]),
+        assert_no_stdout,
+        assert_no_error,
+    ],
+)
+
+run(
+    "textra docp1.png docp2.png -o combined.txt",
+    [
+        assert_files(["combined.txt"]),
+        assert_no_stdout,
+        assert_no_error,
+    ],
+)
+
+run(
+    "textra doc_3.pdf -o doc.txt -t doc/page-{}.txt",
+    [
+        assert_files(["doc.txt", "doc/page-1.txt", "doc/page-2.txt", "doc/page-3.txt"]),
+        assert_no_stdout,
+        assert_no_error,
+    ],
+)
+
+run(
+    "textra docp1.png -o docp1.txt docp2.png -o docp2.txt",
+    [
+        assert_files(["docp1.txt", "docp2.txt"]),
+        assert_no_stdout,
+        assert_no_error,
+    ],
+)
+
+run(
+    "textra docp1.png --outputPositions docp1.json",
+    [
+        assert_files(["docp1.json"]),
+        assert_no_stdout,
+        assert_no_error,
+    ],
+)
+
+run(
+    "textra doc_3.pdf doc_copy.pdf -p {}-page.json",
+    [
+        assert_files(
+            [
+                "doc_3-1-page.json",
+                "doc_3-2-page.json",
+                "doc_3-3-page.json",
+                "doc_copy-1-page.json",
+                "doc_copy-2-page.json",
+                "doc_copy-3-page.json",
+            ]
+        ),
+        assert_no_stdout,
+        assert_no_error,
+    ],
+)
+
+run(
+    [
+        "textra audio.m4a -s --outputPositions audio.json --outputText audio.txt",
+        "textra audio.m4a --silent --outputPositions audio.json --outputText audio.txt",
+    ],
+    [
+        assert_files(["audio.json", "audio.txt"]),
+        assert_no_stdout,
+        assert_no_stderr,
+    ],
+)
+
+run(
+    [
+        "textra doc_3.pdf -s --outputPositions doc.json --outputText doc.txt --outputPageText page-{}.txt",
+        "textra doc_3.pdf --silent --outputPositions doc.json --outputText doc.txt --outputPageText page-{}.txt",
+    ],
+    [
+        assert_files(
+            [
+                "doc-1.json",
+                "doc-2.json",
+                "doc-3.json",
+                "doc.txt",
+                "page-1.txt",
+                "page-2.txt",
+                "page-3.txt",
+            ]
+        ),
+        assert_no_stdout,
+        assert_no_stderr,
+    ],
+)
+
+# Error cases
+run(
+    "textra --invalidoption",
+    [assert_no_file_contents, assert_no_stdout, assert_has_error("invalid argument")],
+)
+
+run(
+    [
+        "textra -o output.txt",
+        "textra --outputText output.txt",
+        "textra -o output.txt docp1.png",
+        "textra --outputText output.txt docp1.png",
+        "textra -p output.json",
+        "textra --outputPositions output.json",
+        "textra -t output.txt",
+        "textra --outputPageText output.txt",
+    ],
+    [
+        assert_no_file_contents,
+        assert_no_stdout,
+        assert_has_error("input files before"),
+    ],
+)
+
+run(
+    [
+        "textra invalidfile.png",
+        "textra invalidfile.png docp1.png",
+        "textra docp1.png invalidfile.png",
+        "textra invalidfile.pdf",
+        "textra invalidfile.mp3",
+    ],
+    [
+        assert_no_file_contents,
+        assert_has_error(),
+    ],
+)
+
+run(
+    "textra test.docx",
+    [
+        assert_no_file_contents,
+        assert_no_stdout,
+        assert_has_error("file type is not supported"),
+    ],
+)
 
 print("ALL TESTS PASSED")

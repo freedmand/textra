@@ -54,10 +54,12 @@ struct ProgressBarTerminalPrinter: ProgressBarPrinter {
 // MARK: - ProgressBar
 
 public struct ProgressBar {
-    private(set) public var index = 0
+    private(set) public var index = 0.0
+    public var visibleIndex = 0
     public let startTime = getTimeOfDay()
     
-    public let count: Int
+    public let count: Double
+    public let visibleCount: Int
     let configuration: [ProgressElementType]?
 
     public static var defaultConfiguration: [ProgressElementType] = [ProgressIndex(), ProgressBarLine(), ProgressTimeEstimates()]
@@ -70,22 +72,25 @@ public struct ProgressBar {
         return values.joined(separator: " ")
     }
     
-    public init(count: Int, configuration: [ProgressElementType]? = nil, printer: ProgressBarPrinter? = nil) {
+    public init(count: Double, visibleCount: Int, configuration: [ProgressElementType]? = nil, printer: ProgressBarPrinter? = nil) {
         self.count = count
+        self.visibleCount = visibleCount
         self.configuration = configuration
         self.printer = printer ?? ProgressBarTerminalPrinter()
     }
     
-    public mutating func next() {
+    public mutating func next(count: Double, visibleCount: Int) {
         guard index <= count else { return }
         let anotherSelf = self
+        index += count
+        visibleIndex += visibleCount
         printer.display(anotherSelf)
-        index += 1
     }
 
-    public mutating func setValue(_ index: Int) {
+    public mutating func setValue(index: Double, visibleIndex: Int) {
         guard index <= count && index >= 0 else { return }
         self.index = index
+        self.visibleIndex = visibleIndex
         let anotherSelf = self
         printer.display(anotherSelf)
     }
@@ -95,37 +100,37 @@ public struct ProgressBar {
 
 // MARK: - GeneratorType
 
-public struct ProgressGenerator<G: IteratorProtocol>: IteratorProtocol {
-    var source: G
-    var progressBar: ProgressBar
-    
-    init(source: G, count: Int, configuration: [ProgressElementType]? = nil, printer: ProgressBarPrinter? = nil) {
-        self.source = source
-        self.progressBar = ProgressBar(count: count, configuration: configuration, printer: printer)
-    }
-    
-    public mutating func next() -> G.Element? {
-        progressBar.next()
-        return source.next()
-    }
-}
+//public struct ProgressGenerator<G: IteratorProtocol>: IteratorProtocol {
+//    var source: G
+//    var progressBar: ProgressBar
+//
+//    init(source: G, count: Int, configuration: [ProgressElementType]? = nil, printer: ProgressBarPrinter? = nil) {
+//        self.source = source
+//        self.progressBar = ProgressBar(count: count, configuration: configuration, printer: printer)
+//    }
+//
+//    public mutating func next() -> G.Element? {
+//        progressBar.next()
+//        return source.next()
+//    }
+//}
 
 
 // MARK: - SequenceType
 
-public struct Progress<G: Sequence>: Sequence {
-    let generator: G
-    let configuration: [ProgressElementType]?
-    let printer: ProgressBarPrinter?
-    
-    public init(_ generator: G, configuration: [ProgressElementType]? = nil, printer: ProgressBarPrinter? = nil) {
-        self.generator = generator
-        self.configuration = configuration
-        self.printer = printer
-    }
-    
-    public func makeIterator() -> ProgressGenerator<G.Iterator> {
-        let count = generator.underestimatedCount
-        return ProgressGenerator(source: generator.makeIterator(), count: count, configuration: configuration, printer: printer)
-    }
-}
+//public struct Progress<G: Sequence>: Sequence {
+//    let generator: G
+//    let configuration: [ProgressElementType]?
+//    let printer: ProgressBarPrinter?
+//
+//    public init(_ generator: G, configuration: [ProgressElementType]? = nil, printer: ProgressBarPrinter? = nil) {
+//        self.generator = generator
+//        self.configuration = configuration
+//        self.printer = printer
+//    }
+//
+//    public func makeIterator() -> ProgressGenerator<G.Iterator> {
+//        let count = generator.underestimatedCount
+//        return ProgressGenerator(source: generator.makeIterator(), count: count, configuration: configuration, printer: printer)
+//    }
+//}
