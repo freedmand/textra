@@ -1,6 +1,6 @@
 # textra
 
-A command-line application to convert images, PDF files of images, and audio files to text using Apple's Vision text recognition API.
+A command-line application to extract text from images, PDFs, and audio files using Apple's Vision and Speech APIs.
 
 ![A terminal window showing the text: | % textra The-Mueller-Report.pdf -o report.txt | Converting: | - Input (448 pg) The-Mueller-Report.pdf | - Output full text report.txt | | 16 of 448 [-      ] ETA: 00:05:21 (at 1.34 it/s)](https://user-images.githubusercontent.com/306095/208481023-dded4395-5969-4401-ad08-b625eadd33bf.png)
 
