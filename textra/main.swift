@@ -42,6 +42,8 @@ struct InputFile {
     var outputPositions: [String] = []
     /// Whether local output should be suppressed (this is set globally, not by the user)
     var suppress = false
+    /// Locale to use when recognizing text
+    var locale: Locale? = nil
     
     /// Whether to output to stdout (calculated as true if no options are specified)
     var shouldOutputToStdout: Bool {
@@ -168,9 +170,10 @@ func getPageCount(convertFile: ConvertFile) -> (Int, Double)? {
  Extracts a JSON document of positional text from the image
  
  - Parameter image: The image from which to extract positional text
+ - Parameter locale: If specified, the locale to use when recognizing text
  - Returns: A tuple of a stringified JSON document of the positional image and the combined text of the extraction, or nil if extraction failed
  */
-func extractPositionalTextFromImage(_ image: CGImage) -> (String, String)? {
+func extractPositionalTextFromImage(_ image: CGImage, locale: Locale?) -> (String, String)? {
     var positionalJson: [[String: Any]]? = nil
     var fullText: [String] = []
     let request = VNRecognizeTextRequest { (request, error) in
@@ -197,7 +200,10 @@ func extractPositionalTextFromImage(_ image: CGImage) -> (String, String)? {
             }
         }
     }
-    
+    if let locale = locale {
+        // Vision uses CLDR-style language codes like "en_US"
+        request.recognitionLanguages = [locale.identifier(Locale.IdentifierType.cldr)]
+    }
     // Create an image request handler
     let handler = VNImageRequestHandler(cgImage: image)
     
@@ -234,7 +240,11 @@ func convertProcessedImage(image: CGImage, pageNum: Int?, inputFile: InputFile, 
     // Extract using new VisionKit API if possible
     if #available(macOS 13.0, *) {
         // Initialize image analyzer
-        let configuration = ImageAnalyzer.Configuration([.text])
+        var configuration = ImageAnalyzer.Configuration([.text])
+        if let locale = inputFile.locale {
+            // VisionKit uses BCP47-style language codes like "en-US"
+            configuration.locales = [locale.identifier(Locale.IdentifierType.bcp47)]
+        }
         let analyzer = ImageAnalyzer()
         
         do {
@@ -248,7 +258,7 @@ func convertProcessedImage(image: CGImage, pageNum: Int?, inputFile: InputFile, 
             }
             // If extracting page positions
             if inputFile.shouldExtractPositionalText {
-                if let (_positionalJson, _) = extractPositionalTextFromImage(image) {
+                if let (_positionalJson, _) = extractPositionalTextFromImage(image, locale: inputFile.locale) {
                     positionalJson = _positionalJson
                 } else {
                     callback(.error(message: "Error extracting positional text from page"))
@@ -262,7 +272,7 @@ func convertProcessedImage(image: CGImage, pageNum: Int?, inputFile: InputFile, 
     } else {
         // Extract text/positions using old Vision API
         // Grab both positional and full text (since it uses the same API; don't want to duplicate work
-        if let (_positionalJson, _transcript) = extractPositionalTextFromImage(image) {
+        if let (_positionalJson, _transcript) = extractPositionalTextFromImage(image, locale: inputFile.locale) {
             // Only send what's requested
             let transcript: String? = inputFile.shouldExtractFullPageText ? _transcript : nil
             let positionalJson: String? = inputFile.shouldExtractPositionalText ? _positionalJson : nil
@@ -347,7 +357,13 @@ func convertPDF(at sourceURL: URL, inputFile: InputFile, dpi: CGFloat = 600, cal
  - Parameter callback: A callback function that is invoked with conversion progress and status
  */
 func convertAudio(at sourceURL: URL, inputFile: InputFile, callback: @escaping (ConvertResponse) -> Void) {
-    if let recognizer = SFSpeechRecognizer() {
+    var recognizer: SFSpeechRecognizer?
+    if let locale = inputFile.locale {
+        recognizer = SFSpeechRecognizer(locale: locale)
+    } else {
+        recognizer = SFSpeechRecognizer()
+    }
+    if let recognizer = recognizer {
         // Ensure speech recognizer is valid
         if !recognizer.isAvailable {
             callback(.error(message: "Speech recognizer not available"))
@@ -928,6 +944,8 @@ let GREEN_START = isTerminal ? "\u{001B}[32m" : ""
 let BOLD_START = isTerminal ? "\u{001B}[1m" : ""
 /// The terminal dim format code
 let DIM_START = isTerminal ? "\u{001B}[2m" : ""
+/// The terminal code to end bold/dim formatting
+let BOLD_DIM_END = isTerminal ? "\u{001B}[22m" : ""
 /// The terminal code to reset formatting
 let RESET = isTerminal ? "\u{001B}[0m" : ""
 
@@ -1142,6 +1160,7 @@ func printUsage(advanced: Bool = false) {
     printWrap("\(GREEN_START)\(BOLD_START)Options:\(RESET)")
     printWrap("  \(BOLD_START)-h\(RESET), \(BOLD_START)--help\(RESET)             Show advanced help")
     printWrap("  \(BOLD_START)-s\(RESET), \(BOLD_START)--silent\(RESET)           Suppress non-essential output")
+    printWrap("  \(BOLD_START)-l\(RESET), \(BOLD_START)--locale\(RESET)           Specify a locale (e.g. en-US) for text recognition")
     if advanced {
         printWrap("  \(BOLD_START)-v\(RESET), \(BOLD_START)--version\(RESET)          Show version number")
     }
@@ -1204,7 +1223,7 @@ func main(args: [String]) async {
     
     // Iterate through each arg and build up a CLI input
     var input = CLIInput()
-    
+    var locale: Locale?
     var i = 0
     while i < args.count {
         switch args[i] {
@@ -1267,6 +1286,25 @@ func main(args: [String]) async {
                 printUsage()
                 return
             }
+        case "-l", "--locale":
+            i += 1
+            if i < args.count {
+                if input.inputFiles.last != nil {
+                    logError(message: "Must specify \(BOLD_START)\(args[i - 1])\(BOLD_DIM_END) before input files")
+                    printUsage()
+                    return
+                } else if locale != nil {
+                    logError(message: "Must specify \(BOLD_START)\(args[i - 1])\(BOLD_DIM_END) at most once")
+                    printUsage()
+                    return
+                } else {
+                    locale = Locale(identifier: args[i])
+                }
+            } else {
+                logError(message: "Must specify a locale after \(BOLD_START)\(args[i - 1])\(RESET)")
+                printUsage()
+                return
+            }
         default:
             if args[i].starts(with: "-") {
                 logError(message: "Invalid argument specified: \(BOLD_START)\(args[i])\(RESET)")
@@ -1274,7 +1312,7 @@ func main(args: [String]) async {
                 return
             } else {
                 // Collect input files
-                var inputFile = InputFile()
+                var inputFile = InputFile(locale: locale)
                 while i < args.count && !args[i].starts(with: "-") {
                     let convertFile = filePathToConvertFile(args[i])
                     if let file = convertFile {

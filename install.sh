@@ -65,7 +65,7 @@ if [[ $(sw_vers -productVersion | cut -d . -f 1) -lt 13 ]]; then
     error 'Mac OS 13 or greater is required to run textra since it depends on Apple''s updated Vision APIs. Please upgrade your Mac and try again.'
 fi
 
-download_uri="https://github.com/freedmand/textra/releases/download/0.1.0/textra-0.1.0.zip"
+download_uri="https://github.com/freedmand/textra/releases/download/0.2.0/textra-0.2.0.zip"
 
 install_env=TEXTRA_INSTALL
 bin_env=\$$install_env/bin

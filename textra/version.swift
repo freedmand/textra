@@ -8,4 +8,4 @@
 import Foundation
 
 /// The authoritative version of the application
-let VERSION = "0.1.0"
+let VERSION = "0.2.0"
