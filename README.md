@@ -28,6 +28,8 @@ textra [options] FILE1 [FILE2...] [outputOptions]
 
 **`-s`, `--silent`**: Suppress non-essential output
 
+**`-l`, `--locale`**: Specify a [locale](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPInternational/LanguageandLocaleIDs/LanguageandLocaleIDs.html) (e.g. en-US) for text recognition
+
 **`-v`, `--version`**: Show version number
 
 ### Output options
