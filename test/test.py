@@ -288,6 +288,25 @@ run(
     ],
 )
 
+run(
+    "textra -l en",
+    [
+        assert_no_file_contents,
+        assert_no_stdout,
+        assert_no_error,
+        assert_stderr_matches("textra -h"),
+    ],
+)
+
+run(
+    "textra -l en docp1.png -o docp1.txt",
+    [
+        assert_files(["docp1.txt"]),
+        assert_no_stdout,
+        assert_no_error,
+    ],
+)
+
 # Error cases
 run(
     "textra --invalidoption",
@@ -333,6 +352,20 @@ run(
         assert_no_stdout,
         assert_has_error("file type is not supported"),
     ],
+)
+
+run(
+    "textra -l", [assert_no_file_contents, assert_no_stdout, assert_has_error("locale")]
+)
+
+run(
+    "textra docp1.png -l en",
+    [assert_no_file_contents, assert_no_stdout, assert_has_error("-l")],
+)
+
+run(
+    "textra -l en -l es",
+    [assert_no_file_contents, assert_no_stdout, assert_has_error("-l")],
 )
 
 # TODO: investigate why these fail (but only in Python?)

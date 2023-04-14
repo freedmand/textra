@@ -77,6 +77,16 @@ PDF file, base file names in the case of image files, or `baseFileName-pageNumbe
 of multiple PDF files. Without specifying the braces, textra will append a dash followed by
 the page number/base file name to the specified path.
 
+## Troubleshooting
+
+- **`ERROR: Speech recognizer does not support on-device recognition`**:
+
+  If you get this error, you may need dictation enabled, which you can accomplish in **System Settings** -> **Keyboard** -> **Dictation** -> **Enable dictation**.
+
+  Flipping the dictation setting may not immediately fix the error. If `textra` still provides this error or if you cannot toggle the setting, try clicking the "Edit" menu item from the top menu bar when you're in an application (e.g. Terminal) and clicking "Start dictation." This may prompt you to enable "Dictation" again, and a microphone prompt may appear (which you can immediately dismiss by clicking "Done").
+
+  Try `textra` again. If it does work, you may safely disable dictation at any time in the system settings. If it does not, please file an issue.
+
 ## License
 
 MIT
