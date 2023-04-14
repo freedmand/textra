@@ -167,6 +167,111 @@ func getPageCount(convertFile: ConvertFile) -> (Int, Double)? {
 }
 
 /**
+ Determines if a VNRectangleObservation has an area of 0.
+
+ - Parameter box: The VNRectangleObservation to test for an empty area.
+
+ - Returns: A boolean value indicating whether the box has an area of 0.
+ */
+func isEmptyBox(_ box: VNRectangleObservation) -> Bool {
+    // Calculate the width and height of the rectangle
+    let width = box.topRight.x - box.topLeft.x
+    let height = box.topLeft.y - box.bottomLeft.y
+    
+    // Return true if the area of the rectangle is 0 (i.e., either width or height is 0)
+    return width * height == 0
+}
+
+/**
+ Extracts sub-bounding boxes for each character or word from the recognized text observation and appends the information to the positionalJson.
+
+ - Parameter text: The recognized text string.
+ - Parameter observation: The VNRecognizedText observation containing the recognized text and its bounding boxes.
+ - Parameter recognizedText: The top recognized text candidate within the observation
+ - Parameter positionalJson: An inout parameter to append the observation information including sub-bounding boxes.
+ */
+func extractSubBounds(observation: VNRecognizedTextObservation, recognizedText: VNRecognizedText, positionalJson: inout [[String: Any]]?) {
+    // Ensure we have recognized text
+    let text = recognizedText.string
+    let stringLength = text.count
+    var previousBox: VNRectangleObservation?
+    var previousText = ""
+    var previousStartIndex = 0
+    var subBounds: [[String: Any]] = []
+    
+    // Iterate through each character in the text
+    for i in 0..<stringLength {
+        guard let range = Range(NSMakeRange(i, 1), in: text) else { continue }
+        
+        do {
+            let box = try recognizedText.boundingBox(for: range)
+            
+            // Check if the box is not the entire document
+            // (which is the case for whitespace)
+            if let currentBox = box {
+                if let previousBox = previousBox {
+                    let sameBox = previousBox.topLeft == currentBox.topLeft && previousBox.topRight == currentBox.topRight && previousBox.bottomLeft == currentBox.bottomLeft && previousBox.bottomRight == currentBox.bottomRight
+                    
+                    if !sameBox {
+                        // Only append the box if it's not empty (as is the case with whitespace)
+                        if !isEmptyBox(previousBox) {
+                            subBounds.append([
+                                "text": previousText,
+                                "offset": [previousStartIndex, i],
+                                "bounds": [
+                                    "x1": previousBox.topLeft.x,
+                                    "y1": previousBox.topLeft.y,
+                                    "x2": previousBox.bottomRight.x,
+                                    "y2": previousBox.bottomRight.y
+                                ]
+                            ])
+                        }
+                        previousText = ""
+                        previousStartIndex = i
+                    }
+                }
+                
+                if let character = text[range].first {
+                    previousText.append(character)
+                }
+                
+                previousBox = box
+            }
+        } catch {
+            print("Error: Unable to get bounding box for character at index \(i)")
+        }
+    }
+    
+    if let lastBox = previousBox, !previousText.isEmpty, !isEmptyBox(lastBox) {
+        subBounds.append([
+            "text": previousText,
+            "offset": [previousStartIndex, stringLength],
+            "bounds": [
+                "x1": lastBox.topLeft.x,
+                "y1": lastBox.topLeft.y,
+                "x2": lastBox.bottomRight.x,
+                "y2": lastBox.bottomRight.y
+            ]
+        ])
+    }
+    
+    // Append the observation information and subBounds to the positionalJson
+    positionalJson?.append([
+        "observation": [
+            "text": text,
+            "confidence": observation.confidence,
+            "bounds": [
+                "x1": observation.topLeft.x,
+                "y1": observation.topLeft.y,
+                "x2": observation.bottomRight.x,
+                "y2": observation.bottomRight.y
+            ],
+            "subBounds": subBounds
+        ]
+    ])
+}
+
+/**
  Extracts a JSON document of positional text from the image
  
  - Parameter image: The image from which to extract positional text
@@ -186,17 +291,11 @@ func extractPositionalTextFromImage(_ image: CGImage, locale: Locale?) -> (Strin
         // Get the recognized text and its location from the observations
         for observation in observations {
             if let recognizedText = observation.topCandidates(1).first {
-                fullText.append(recognizedText.string)
-                positionalJson?.append(["observation": [
-                    "text": recognizedText.string,
-                    "confidence": recognizedText.confidence,
-                    "bounds": [
-                        "x1": observation.topLeft.x,
-                        "y1": observation.topLeft.y,
-                        "x2": observation.bottomRight.x,
-                        "y2": observation.bottomRight.y
-                    ]
-                ]])
+                let text = recognizedText.string
+                fullText.append(text)
+                
+                // Add in all bounds information
+                extractSubBounds(observation: observation, recognizedText: recognizedText, positionalJson: &positionalJson)
             }
         }
     }
